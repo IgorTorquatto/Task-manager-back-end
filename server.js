@@ -60,6 +60,31 @@ app.post("/create_user", async (req, res) => {
     }
 });
 
+app.post('/login_user',(req,res)=>{
+    const { email,password } = req.body;
+
+    const query = `SELECT * FROM users WHERE email = ?`;
+    db.query(query,[email], async (err,results)=>{
+      if(err){
+        return res.status(500).json({ message: "Erro no servidor"});
+      }
+
+      if(results.length === 0){
+        return res.status(401).json({ message: "Usuário não encontrado"});
+      }
+
+      const user = results[0];
+      //console.log(results); retorna uma lista de objetos todos os campos/colunas do banco de dados
+      const isMatch = await bcrypt.compare(password,user.password);
+
+      if(!isMatch){
+        return res.status(401).json({ message: "Senha inválida" });
+      }
+
+      res.status(200).json({ message: "Login bem-sucedido", user: { id: user.id, name: user.name, email: user.email } });
+    })
+});
+
 app.listen(port,()=>{
     console.log(`Server running port ${port}`);
 });
